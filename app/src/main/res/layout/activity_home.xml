@@ -19,12 +19,16 @@
 
         <variable
             name="nano"
-            type="com.eveningoutpost.dexdrip.UtilityModels.NanoStatus" />
+            type="com.eveningoutpost.dexdrip.utilitymodels.NanoStatus" />
+
+        <variable
+            name="expiry"
+            type="com.eveningoutpost.dexdrip.utilitymodels.NanoStatus" />
 
         <import type="android.view.View" />
     </data>
 
-    <android.support.v4.widget.DrawerLayout
+    <androidx.drawerlayout.widget.DrawerLayout
 
         android:id="@+id/drawer_layout"
         android:layout_width="match_parent"
@@ -41,13 +45,11 @@
             android:orientation="vertical"
             android:padding="0dp">
 
-            <android.support.v7.widget.Toolbar
+            <androidx.appcompat.widget.Toolbar
                 android:id="@+id/my_toolbar"
                 android:layout_width="match_parent"
-
                 android:layout_height="wrap_content"
-                android:minHeight="?attr/actionBarSize"
-                app:theme="@style/Toolbar" />
+                android:minHeight="?attr/actionBarSize" />
 
             <RelativeLayout
                 android:id="@+id/home_layout_holder"
@@ -187,19 +189,18 @@
                     android:id="@+id/btnTreatment"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_alignEnd="@+id/layoutCurrentBgValueRealTime"
                     android:layout_below="@+id/layoutCurrentBgValueRealTime"
-                    android:layout_marginBottom="1dp"
-                    android:layout_marginRight="6dp"
+                    android:layout_alignEnd="@+id/layoutCurrentBgValueRealTime"
                     android:layout_marginTop="1dp"
+                    android:layout_marginRight="6dp"
                     android:background="@android:color/transparent"
                     android:contentDescription="@string/speaktreatment"
                     android:gravity="right"
                     android:nestedScrollingEnabled="false"
-                    android:paddingBottom="1dp"
                     android:paddingLeft="2dp"
-                    android:paddingRight="4dp"
                     android:paddingTop="2dp"
+                    android:paddingRight="4dp"
+                    android:paddingBottom="1dp"
                     android:src="@drawable/ic_eyedropper_variant_grey600_24dp" />
 
                 <ImageButton
@@ -338,24 +339,90 @@
                     android:textStyle="bold" />
 
                 <ImageButton
-                    android:id="@+id/buttonInsulin"
+                    android:id="@+id/buttonInsulin0"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_alignStart="@+id/buttonCarbs"
-                    android:layout_below="@+id/buttonCarbs"
+                    android:layout_below="@+id/textCarbohydrate"
+                    android:layout_alignLeft="@+id/buttonCarbs"
                     android:src="@drawable/ic_colorize_white_48dp" />
 
+
                 <TextView
-                    android:id="@+id/textInsulinUnits"
+                    android:id="@+id/textInsulinSumUnits"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_alignBottom="@+id/buttonInsulin"
-                    android:layout_marginBottom="12dp"
-                    android:layout_toEndOf="@+id/buttonInsulin"
+                    android:layout_below="@+id/textCarbohydrate"
+                    android:layout_alignLeft="@+id/textCarbohydrate"
                     android:background="@android:color/transparent"
                     android:text="14 units"
                     android:textColor="@android:color/holo_green_light"
                     android:textSize="22dp"
+                    android:textStyle="bold" />
+
+                <ImageButton
+                    android:id="@+id/buttonInsulin1"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@+id/textInsulinSumUnits"
+                    android:layout_alignLeft="@+id/buttonCarbs"
+                    android:src="@drawable/ic_colorize_white_48dp" />
+
+                <TextView
+                    android:id="@+id/textInsulin1Units"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignBottom="@+id/buttonInsulin1"
+                    android:layout_marginStart="0dp"
+                    android:layout_marginBottom="12dp"
+                    android:layout_toEndOf="@+id/buttonInsulin1"
+                    android:background="@android:color/transparent"
+                    android:text="14 units"
+                    android:textColor="@android:color/holo_green_light"
+                    android:textSize="18dp"
+                    android:textStyle="bold" />
+
+                <ImageButton
+                    android:id="@+id/buttonInsulin2"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@+id/buttonInsulin1"
+                    android:layout_alignLeft="@+id/buttonInsulin1"
+                    android:src="@drawable/ic_colorize_white_48dp" />
+
+                <TextView
+                    android:id="@+id/textInsulin2Units"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignBottom="@+id/buttonInsulin2"
+                    android:layout_marginStart="0dp"
+                    android:layout_marginBottom="12dp"
+                    android:layout_toEndOf="@+id/buttonInsulin2"
+                    android:background="@android:color/transparent"
+                    android:text="14 units"
+                    android:textColor="@android:color/holo_green_light"
+                    android:textSize="18dp"
+                    android:textStyle="bold" />
+
+                <ImageButton
+                    android:id="@+id/buttonInsulin3"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@+id/buttonInsulin2"
+                    android:layout_alignLeft="@+id/buttonInsulin2"
+                    android:src="@drawable/ic_colorize_white_48dp" />
+
+                <TextView
+                    android:id="@+id/textInsulin3Units"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignBottom="@+id/buttonInsulin3"
+                    android:layout_marginStart="0dp"
+                    android:layout_marginBottom="12dp"
+                    android:layout_toEndOf="@+id/buttonInsulin3"
+                    android:background="@android:color/transparent"
+                    android:text="14 units"
+                    android:textColor="@android:color/holo_green_light"
+                    android:textSize="18dp"
                     android:textStyle="bold" />
 
                 <ImageButton
@@ -473,12 +540,21 @@
 
                 <TextView
                     android:id="@+id/nanoStatusText"
-                    android:layout_width="0dp"
+                    android:layout_width="wrap_content"
                     android:layout_marginTop="2dp"
+                    android:layout_marginStart="5dp"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
                     android:text="@{nano.color_watch, default=`Nano Status`}"
                     app:showIfTrue="@{nano.color_watch.length() > 0}"/>
+
+                <TextView
+                    android:id="@+id/ExpiryStatusText"
+                    android:layout_width="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:layout_marginStart="5dp"
+                    android:layout_height="wrap_content"
+                    android:text="@{expiry.color_watch, default=`Expiry Status`}"
+                    app:showIfTrue="@{(safeUnbox(vs.included[`sensor_expiry`])) &amp;&amp; (expiry.color_watch.length() > 0)}"/>
 
             </LinearLayout>
 
@@ -581,6 +657,6 @@
             android:layout_gravity="start"
             android:layout_marginTop="?attr/actionBarSize"
             tools:layout="@layout/fragment_navigation_drawer" />
-    </android.support.v4.widget.DrawerLayout>
+    </androidx.drawerlayout.widget.DrawerLayout>
 
 </layout>

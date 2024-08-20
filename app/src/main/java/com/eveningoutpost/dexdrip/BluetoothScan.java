@@ -31,14 +31,14 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.activeandroid.query.Select;
-import com.eveningoutpost.dexdrip.Models.ActiveBluetoothDevice;
-import com.eveningoutpost.dexdrip.Models.JoH;
-import com.eveningoutpost.dexdrip.Models.UserError;
-import com.eveningoutpost.dexdrip.Models.UserError.Log;
-import com.eveningoutpost.dexdrip.UtilityModels.Blukon;
-import com.eveningoutpost.dexdrip.UtilityModels.CollectionServiceStarter;
-import com.eveningoutpost.dexdrip.UtilityModels.Inevitable;
-import com.eveningoutpost.dexdrip.UtilityModels.Pref;
+import com.eveningoutpost.dexdrip.models.ActiveBluetoothDevice;
+import com.eveningoutpost.dexdrip.models.JoH;
+import com.eveningoutpost.dexdrip.models.UserError;
+import com.eveningoutpost.dexdrip.models.UserError.Log;
+import com.eveningoutpost.dexdrip.utilitymodels.Blukon;
+import com.eveningoutpost.dexdrip.utilitymodels.CollectionServiceStarter;
+import com.eveningoutpost.dexdrip.utilitymodels.Inevitable;
+import com.eveningoutpost.dexdrip.utilitymodels.Pref;
 import com.eveningoutpost.dexdrip.cgm.medtrum.Medtrum;
 import com.eveningoutpost.dexdrip.utils.AndroidBarcode;
 import com.eveningoutpost.dexdrip.utils.ListActivityWithMenu;
@@ -226,7 +226,11 @@ public class BluetoothScan extends ListActivityWithMenu {
         } else {
             is_scanning = false;
             if (bluetooth_adapter != null && bluetooth_adapter.isEnabled()) {
-                bluetooth_adapter.stopLeScan(mLeScanCallback);
+                try {
+                    bluetooth_adapter.stopLeScan(mLeScanCallback);
+                } catch (NullPointerException e) {
+                    // concurrency related
+                }
             }
         }
         invalidateOptionsMenu();
@@ -381,7 +385,8 @@ public class BluetoothScan extends ListActivityWithMenu {
             if (device.getName().toLowerCase().contains("limitter")
                     && (adverts.containsKey(device.getAddress())
                     && ((new String(adverts.get(device.getAddress()), "UTF-8").contains("eLeR"))
-                    || (new String(adverts.get(device.getAddress()), "UTF-8").contains("data"))))) {
+                    || (new String(adverts.get(device.getAddress()), "UTF-8").contains("data"))))||
+                    device.getName().toLowerCase().contains("limitterd")) {
                 String msg = "Auto-detected transmiter_pl device!";
                 Log.e(TAG, msg);
                 JoH.static_toast_long(msg);
@@ -435,7 +440,8 @@ public class BluetoothScan extends ListActivityWithMenu {
                     prefs.edit().putString("dex_collection_method", "LimiTTer").apply();
                 }
                 returnToHome();
-            } else if (device.getName().toLowerCase().contains("miaomiao")) {
+            } else if ((device.getName().toLowerCase().contains("miaomiao"))
+                    || (device.getName().toLowerCase().startsWith("watlaa"))) {
                 if (!(CollectionServiceStarter.isLimitter() || CollectionServiceStarter.isWifiandBTLibre())) {
                     prefs.edit().putString("dex_collection_method", "LimiTTer").apply();
                 }

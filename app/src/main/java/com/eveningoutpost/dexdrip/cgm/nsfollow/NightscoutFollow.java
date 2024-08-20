@@ -1,17 +1,27 @@
 package com.eveningoutpost.dexdrip.cgm.nsfollow;
 
 import com.eveningoutpost.dexdrip.BuildConfig;
-import com.eveningoutpost.dexdrip.Models.JoH;
-import com.eveningoutpost.dexdrip.Models.UserError;
-import com.eveningoutpost.dexdrip.UtilityModels.CollectionServiceStarter;
-import com.eveningoutpost.dexdrip.UtilityModels.Constants;
-import com.eveningoutpost.dexdrip.UtilityModels.NightscoutTreatments;
-import com.eveningoutpost.dexdrip.UtilityModels.Pref;
+import com.eveningoutpost.dexdrip.models.JoH;
+import com.eveningoutpost.dexdrip.models.UserError;
+import com.eveningoutpost.dexdrip.utilitymodels.CollectionServiceStarter;
+import com.eveningoutpost.dexdrip.utilitymodels.Constants;
+import com.eveningoutpost.dexdrip.utilitymodels.NightscoutTreatments;
+import com.eveningoutpost.dexdrip.utilitymodels.Pref;
 import com.eveningoutpost.dexdrip.cgm.nsfollow.messages.Entry;
 import com.eveningoutpost.dexdrip.cgm.nsfollow.utils.NightscoutUrl;
 import com.eveningoutpost.dexdrip.evaluators.MissedReadingsEstimator;
 import com.eveningoutpost.dexdrip.tidepool.InfoInterceptor;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonSyntaxException;
+import com.google.gson.TypeAdapter;
+import com.google.gson.TypeAdapterFactory;
+import com.google.gson.internal.bind.TypeAdapters;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonToken;
+import com.google.gson.stream.JsonWriter;
 
+import java.io.IOException;
 import java.util.List;
 
 import okhttp3.OkHttpClient;
@@ -25,9 +35,9 @@ import retrofit2.http.Header;
 import retrofit2.http.Headers;
 import retrofit2.http.Query;
 
-import static com.eveningoutpost.dexdrip.Models.JoH.emptyString;
-import static com.eveningoutpost.dexdrip.UtilityModels.BgGraphBuilder.DEXCOM_PERIOD;
-import static com.eveningoutpost.dexdrip.UtilityModels.OkHttpWrapper.enableTls12OnPreLollipop;
+import static com.eveningoutpost.dexdrip.models.JoH.emptyString;
+import static com.eveningoutpost.dexdrip.utilitymodels.BgGraphBuilder.DEXCOM_PERIOD;
+import static com.eveningoutpost.dexdrip.utilitymodels.OkHttpWrapper.enableTls12OnPreLollipop;
 import static com.eveningoutpost.dexdrip.cgm.nsfollow.NightscoutFollowService.msg;
 
 /**
@@ -36,7 +46,6 @@ import static com.eveningoutpost.dexdrip.cgm.nsfollow.NightscoutFollowService.ms
  * Data transport interface to Nightscout for follower service
  *
  */
-
 public class NightscoutFollow {
 
     private static final String TAG = "NightscoutFollow";
@@ -57,7 +66,6 @@ public class NightscoutFollow {
 
         @GET("/api/v1/treatments")
         Call<ResponseBody> getTreatments(@Header("api-secret") String secret);
-
     }
 
     private static Nightscout getService() {
@@ -83,6 +91,7 @@ public class NightscoutFollow {
         session.entriesCallback = new NightscoutCallback<List<Entry>>("NS entries download", session, () -> {
             // process data
             EntryProcessor.processEntries(session.entries, live);
+            NightscoutFollowService.updateBgReceiveDelay();
             NightscoutFollowService.scheduleWakeUp();
             msg("");
         })
@@ -93,6 +102,7 @@ public class NightscoutFollow {
             // process data
             try {
                 NightscoutTreatments.processTreatmentResponse(session.treatments.string());
+                NightscoutFollowService.updateTreatmentDownloaded();
             } catch (Exception e) {
                 msg("Treatments: " + e);
             }
@@ -128,9 +138,43 @@ public class NightscoutFollow {
         return Pref.getString("nsfollow_url", "");
     }
 
-    private static boolean treatmentDownloadEnabled() {
+    static boolean treatmentDownloadEnabled() {
         return Pref.getBooleanDefaultFalse("nsfollow_download_treatments");
     }
+
+    public static final TypeAdapter<Number> UNRELIABLE_INTEGER = new TypeAdapter<Number>() {
+        @Override
+        public Number read(JsonReader in) throws IOException {
+            JsonToken jsonToken = in.peek();
+            switch (jsonToken) {
+                case NUMBER:
+                case STRING:
+                    String s = in.nextString();
+                    try {
+                        return Integer.parseInt(s);
+                    } catch (NumberFormatException ignored) {
+                    }
+                    try {
+                        return (int)Double.parseDouble(s);
+                    } catch (NumberFormatException ignored) {
+                    }
+                    return null;
+                case NULL:
+                    in.nextNull();
+                    return null;
+                case BOOLEAN:
+                    in.nextBoolean();
+                    return null;
+                default:
+                    throw new JsonSyntaxException("Expecting number, got: " + jsonToken);
+            }
+        }
+        @Override
+        public void write(JsonWriter out, Number value) throws IOException {
+            out.value(value);
+        }
+    };
+    public static final TypeAdapterFactory UNRELIABLE_INTEGER_FACTORY = TypeAdapters.newFactory(int.class, Integer.class, UNRELIABLE_INTEGER);
 
     // TODO make reusable
     public static Retrofit getRetrofitInstance() throws IllegalArgumentException {
@@ -150,10 +194,13 @@ public class NightscoutFollow {
                     .addInterceptor(new GzipRequestInterceptor())
                     .build();
 
+            final Gson gson = new GsonBuilder()
+                    .registerTypeAdapterFactory(UNRELIABLE_INTEGER_FACTORY)
+                    .create();
             retrofit = new retrofit2.Retrofit.Builder()
                     .baseUrl(url)
                     .client(client)
-                    .addConverterFactory(GsonConverterFactory.create())
+                    .addConverterFactory(GsonConverterFactory.create(gson))
                     .build();
         }
         return retrofit;
@@ -165,5 +212,4 @@ public class NightscoutFollow {
         UserError.Log.d(TAG, "Instance reset");
         CollectionServiceStarter.restartCollectionServiceBackground();
     }
-
 }

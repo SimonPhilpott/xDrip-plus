@@ -1,14 +1,15 @@
 package com.eveningoutpost.dexdrip.cgm.sharefollow;
 
-import com.eveningoutpost.dexdrip.Models.BgReading;
-import com.eveningoutpost.dexdrip.Models.Sensor;
-import com.eveningoutpost.dexdrip.Models.UserError;
-import com.eveningoutpost.dexdrip.UtilityModels.Inevitable;
+import com.eveningoutpost.dexdrip.models.BgReading;
+import com.eveningoutpost.dexdrip.models.Sensor;
+import com.eveningoutpost.dexdrip.models.UserError;
+import com.eveningoutpost.dexdrip.utilitymodels.Inevitable;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 
-import static com.eveningoutpost.dexdrip.Models.BgReading.SPECIAL_FOLLOWER_PLACEHOLDER;
+import static com.eveningoutpost.dexdrip.models.BgReading.SPECIAL_FOLLOWER_PLACEHOLDER;
 
 /**
  * jamorham
@@ -36,12 +37,13 @@ public class EntryProcessor {
 
                 final long recordTimestamp = entry.getTimestamp();
                 if (recordTimestamp > 0) {
-                    final BgReading existing = BgReading.getForPreciseTimestamp(recordTimestamp, 10000);
+                    final BgReading existing = BgReading.getForPreciseTimestamp(recordTimestamp, 10_000);
                     if (existing == null) {
                         UserError.Log.d(TAG, "NEW NEW NEW New entry: " + entry.toS());
 
                         if (live) {
                             final BgReading bg = new BgReading();
+                            bg.uuid = UUID.randomUUID().toString();
                             bg.timestamp = recordTimestamp;
                             bg.calculated_value = entry.Value;
                             bg.raw_data = SPECIAL_FOLLOWER_PLACEHOLDER;

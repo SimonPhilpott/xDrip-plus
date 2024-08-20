@@ -9,22 +9,22 @@ import android.text.SpannableString;
 import android.util.Pair;
 
 import com.eveningoutpost.dexdrip.Home;
-import com.eveningoutpost.dexdrip.ImportedLibraries.usbserial.util.HexDump;
-import com.eveningoutpost.dexdrip.Models.ActiveBluetoothDevice;
-import com.eveningoutpost.dexdrip.Models.BgReading;
-import com.eveningoutpost.dexdrip.Models.JoH;
-import com.eveningoutpost.dexdrip.Models.Prediction;
-import com.eveningoutpost.dexdrip.Models.TransmitterData;
-import com.eveningoutpost.dexdrip.Models.UserError;
+import com.eveningoutpost.dexdrip.importedlibraries.usbserial.util.HexDump;
+import com.eveningoutpost.dexdrip.models.ActiveBluetoothDevice;
+import com.eveningoutpost.dexdrip.models.BgReading;
+import com.eveningoutpost.dexdrip.models.JoH;
+import com.eveningoutpost.dexdrip.models.Prediction;
+import com.eveningoutpost.dexdrip.models.TransmitterData;
+import com.eveningoutpost.dexdrip.models.UserError;
 import com.eveningoutpost.dexdrip.R;
-import com.eveningoutpost.dexdrip.Services.JamBaseBluetoothService;
-import com.eveningoutpost.dexdrip.UtilityModels.BgGraphBuilder;
-import com.eveningoutpost.dexdrip.UtilityModels.Constants;
-import com.eveningoutpost.dexdrip.UtilityModels.Inevitable;
-import com.eveningoutpost.dexdrip.UtilityModels.PersistentStore;
-import com.eveningoutpost.dexdrip.UtilityModels.Pref;
-import com.eveningoutpost.dexdrip.UtilityModels.RxBleProvider;
-import com.eveningoutpost.dexdrip.UtilityModels.StatusItem;
+import com.eveningoutpost.dexdrip.services.JamBaseBluetoothService;
+import com.eveningoutpost.dexdrip.utilitymodels.BgGraphBuilder;
+import com.eveningoutpost.dexdrip.utilitymodels.Constants;
+import com.eveningoutpost.dexdrip.utilitymodels.Inevitable;
+import com.eveningoutpost.dexdrip.utilitymodels.PersistentStore;
+import com.eveningoutpost.dexdrip.utilitymodels.Pref;
+import com.eveningoutpost.dexdrip.utilitymodels.RxBleProvider;
+import com.eveningoutpost.dexdrip.utilitymodels.StatusItem;
 import com.eveningoutpost.dexdrip.cgm.medtrum.messages.AnnexARx;
 import com.eveningoutpost.dexdrip.cgm.medtrum.messages.AuthRx;
 import com.eveningoutpost.dexdrip.cgm.medtrum.messages.AuthTx;
@@ -44,32 +44,36 @@ import com.eveningoutpost.dexdrip.ui.helpers.Span;
 import com.eveningoutpost.dexdrip.utils.BtCallBack;
 import com.eveningoutpost.dexdrip.utils.DexCollectionType;
 import com.eveningoutpost.dexdrip.utils.DisconnectReceiver;
+import com.eveningoutpost.dexdrip.utils.bt.Subscription;
 import com.eveningoutpost.dexdrip.utils.framework.WakeLockTrampoline;
 import com.eveningoutpost.dexdrip.xdrip;
-import com.polidea.rxandroidble.RxBleClient;
-import com.polidea.rxandroidble.RxBleConnection;
-import com.polidea.rxandroidble.RxBleDevice;
+import com.polidea.rxandroidble2.RxBleClient;
+import com.polidea.rxandroidble2.RxBleConnection;
+import com.polidea.rxandroidble2.RxBleDevice;
 
 import java.security.InvalidAlgorithmParameterException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import rx.Subscription;
-import rx.schedulers.Schedulers;
+//import rx.Subscription;
+//import rx.schedulers.Schedulers;
 
-import static com.eveningoutpost.dexdrip.Models.BgReading.bgReadingInsertMedtrum;
-import static com.eveningoutpost.dexdrip.Models.JoH.msSince;
-import static com.eveningoutpost.dexdrip.Models.JoH.msTill;
-import static com.eveningoutpost.dexdrip.Models.JoH.quietratelimit;
-import static com.eveningoutpost.dexdrip.UtilityModels.Constants.HOUR_IN_MS;
-import static com.eveningoutpost.dexdrip.UtilityModels.Constants.MEDTRUM_SERVICE_FAILOVER_ID;
-import static com.eveningoutpost.dexdrip.UtilityModels.Constants.MEDTRUM_SERVICE_RETRY_ID;
-import static com.eveningoutpost.dexdrip.UtilityModels.Constants.MINUTE_IN_MS;
-import static com.eveningoutpost.dexdrip.UtilityModels.StatusItem.Highlight.BAD;
-import static com.eveningoutpost.dexdrip.UtilityModels.StatusItem.Highlight.CRITICAL;
-import static com.eveningoutpost.dexdrip.UtilityModels.StatusItem.Highlight.GOOD;
-import static com.eveningoutpost.dexdrip.UtilityModels.StatusItem.Highlight.NORMAL;
+import io.reactivex.schedulers.Schedulers;
+
+
+import static com.eveningoutpost.dexdrip.models.BgReading.bgReadingInsertMedtrum;
+import static com.eveningoutpost.dexdrip.models.JoH.msSince;
+import static com.eveningoutpost.dexdrip.models.JoH.msTill;
+import static com.eveningoutpost.dexdrip.models.JoH.quietratelimit;
+import static com.eveningoutpost.dexdrip.utilitymodels.Constants.HOUR_IN_MS;
+import static com.eveningoutpost.dexdrip.utilitymodels.Constants.MEDTRUM_SERVICE_FAILOVER_ID;
+import static com.eveningoutpost.dexdrip.utilitymodels.Constants.MEDTRUM_SERVICE_RETRY_ID;
+import static com.eveningoutpost.dexdrip.utilitymodels.Constants.MINUTE_IN_MS;
+import static com.eveningoutpost.dexdrip.utilitymodels.StatusItem.Highlight.BAD;
+import static com.eveningoutpost.dexdrip.utilitymodels.StatusItem.Highlight.CRITICAL;
+import static com.eveningoutpost.dexdrip.utilitymodels.StatusItem.Highlight.GOOD;
+import static com.eveningoutpost.dexdrip.utilitymodels.StatusItem.Highlight.NORMAL;
 import static com.eveningoutpost.dexdrip.cgm.medtrum.Const.CGM_CHARACTERISTIC_INDICATE;
 import static com.eveningoutpost.dexdrip.cgm.medtrum.Const.OPCODE_AUTH_REPLY;
 import static com.eveningoutpost.dexdrip.cgm.medtrum.Const.OPCODE_BACK_REPLY;
@@ -304,7 +308,7 @@ public class MedtrumCollectionService extends JamBaseBluetoothService implements
         UserError.Log.d(TAG, "enable features - enter");
         stopListening();
         if (connection != null) {
-            notificationSubscription = connection.setupNotification(Const.CGM_CHARACTERISTIC_NOTIFY)
+            notificationSubscription = new Subscription(connection.setupNotification(Const.CGM_CHARACTERISTIC_NOTIFY)
                     .timeout(LISTEN_STASIS_SECONDS, TimeUnit.SECONDS) // WARN
                     .observeOn(Schedulers.newThread())
                     .doOnNext(notificationObservable -> {
@@ -331,12 +335,12 @@ public class MedtrumCollectionService extends JamBaseBluetoothService implements
                             }, throwable -> {
                                 UserError.Log.d(TAG, "notification throwable: " + throwable);
                             }
-                    );
+                    ));
 
 
             final InboundStream inboundStream = new InboundStream();
 
-            indicationSubscription = connection.setupIndication(CGM_CHARACTERISTIC_INDICATE)
+            indicationSubscription = new Subscription(connection.setupIndication(CGM_CHARACTERISTIC_INDICATE)
                     .timeout(LISTEN_STASIS_SECONDS, TimeUnit.SECONDS) // WARN
                     .observeOn(Schedulers.newThread())
                     .doOnNext(notificationObservable -> {
@@ -372,7 +376,7 @@ public class MedtrumCollectionService extends JamBaseBluetoothService implements
                             }, throwable -> {
                                 UserError.Log.d(TAG, "indication throwable: " + throwable);
                             }
-                    );
+                    ));
         } else {
             UserError.Log.e(TAG, "Connection null when trying to set notifications");
         }
@@ -401,24 +405,24 @@ public class MedtrumCollectionService extends JamBaseBluetoothService implements
                 bleDevice = rxBleClient.getBleDevice(address);
 
                 // Listen for connection state changes
-                stateSubscription = bleDevice.observeConnectionStateChanges()
+                stateSubscription = new Subscription(bleDevice.observeConnectionStateChanges()
                         // .observeOn(AndroidSchedulers.mainThread())
                         .subscribeOn(Schedulers.io())
                         .subscribe(this::onConnectionStateChange, throwable -> {
                             UserError.Log.wtf(TAG, "Got Error from state subscription: " + throwable);
-                        });
+                        }));
 
                 // Attempt to establish a connection
                 listen_connected = false;
                 auto = false; // auto not allowed due to timeout
-                connectionSubscription = bleDevice.establishConnection(auto)
+                connectionSubscription = new Subscription(bleDevice.establishConnection(auto)
                         .timeout(LISTEN_STASIS_SECONDS, TimeUnit.SECONDS)
                         // .flatMap(RxBleConnection::discoverServices)
                         // .observeOn(AndroidSchedulers.mainThread())
                         // .doOnUnsubscribe(this::clearSubscription)
                         .subscribeOn(Schedulers.io())
 
-                        .subscribe(this::onConnectionReceived, this::onConnectionFailure);
+                        .subscribe(this::onConnectionReceived, this::onConnectionFailure));
 
             } else {
                 UserError.Log.wtf(TAG, "No transmitter mac address!");
@@ -877,7 +881,7 @@ public class MedtrumCollectionService extends JamBaseBluetoothService implements
                         if (wakeup_jitter > 1000) {
                             UserError.Log.d(TAG, "Wake up, time jitter: " + JoH.niceTimeScalar(wakeup_jitter));
                             if ((wakeup_jitter > TOLERABLE_JITTER) && (!JoH.buggy_samsung) && JoH.isSamsung()) {
-                                UserError.Log.wtf(TAG, "Enabled Buggy Samsung workaround due to jitter of: " + JoH.niceTimeScalar(wakeup_jitter));
+                                UserError.Log.wtf(TAG, "Enabled wake workaround due to jitter of: " + JoH.niceTimeScalar(wakeup_jitter));
                                 JoH.buggy_samsung = true;
                                 PersistentStore.incrementLong(BUGGY_SAMSUNG_ENABLED);
                                 max_wakeup_jitter = 0;

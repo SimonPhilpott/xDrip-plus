@@ -1,6 +1,6 @@
 package com.eveningoutpost.dexdrip.utils.time;
 
-import com.eveningoutpost.dexdrip.UtilityModels.PersistentStore;
+import com.eveningoutpost.dexdrip.utilitymodels.PersistentStore;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
@@ -10,7 +10,7 @@ import java.util.List;
 
 import lombok.RequiredArgsConstructor;
 
-import static com.eveningoutpost.dexdrip.Models.JoH.emptyString;
+import static com.eveningoutpost.dexdrip.models.JoH.emptyString;
 
 /**
  * Created by jamorham on 14/02/2018.
@@ -111,7 +111,7 @@ public class SlidingWindowConstraint {
     }
 
     // get sum of non-expired records held
-    private double totalRecords() {
+    public double totalRecords() {
         double total = 0;
         final long expire_time = tsl() - period;
         synchronized (records) {

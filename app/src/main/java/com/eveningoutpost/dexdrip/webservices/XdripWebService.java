@@ -1,15 +1,16 @@
 package com.eveningoutpost.dexdrip.webservices;
 
+import android.os.Build;
 import android.os.PowerManager;
 import android.text.TextUtils;
 import android.util.Log;
 
-import com.eveningoutpost.dexdrip.Models.JoH;
-import com.eveningoutpost.dexdrip.Models.UserError;
 import com.eveningoutpost.dexdrip.R;
-import com.eveningoutpost.dexdrip.UtilityModels.Constants;
-import com.eveningoutpost.dexdrip.UtilityModels.Pref;
 import com.eveningoutpost.dexdrip.dagger.Singleton;
+import com.eveningoutpost.dexdrip.models.JoH;
+import com.eveningoutpost.dexdrip.models.UserError;
+import com.eveningoutpost.dexdrip.utilitymodels.Constants;
+import com.eveningoutpost.dexdrip.utilitymodels.Pref;
 import com.eveningoutpost.dexdrip.utils.TriState;
 import com.eveningoutpost.dexdrip.xdrip;
 import com.google.common.base.Charsets;
@@ -19,13 +20,17 @@ import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.PrintStream;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
-import java.net.URLDecoder;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Locale;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.net.ssl.SSLHandshakeException;
@@ -65,6 +70,14 @@ public class XdripWebService implements Runnable {
 
     private boolean isRunning;
     private ServerSocket mServerSocket;
+
+    private DateTimeFormatter rfc7231formatter;
+
+    {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            rfc7231formatter = DateTimeFormatter.ofPattern("EEE, dd MMM yyyy HH:mm:ss O", Locale.ENGLISH);
+        }
+    }
 
     /**
      * WebServer constructor.
@@ -205,6 +218,24 @@ public class XdripWebService implements Runnable {
         }
     }
 
+    // Makes \n be \r\n for HTTP specification compliance
+    static class CRLFPrintStream extends PrintStream {
+
+        public CRLFPrintStream(OutputStream out) {
+            super(out);
+        }
+
+        @Override
+        public void println(String x) {
+            super.println(x + "\r");
+        }
+
+        @Override
+        public void println() {
+            println("");
+        }
+    }
+
     /**
      * Respond to a request from a client.
      *
@@ -214,7 +245,7 @@ public class XdripWebService implements Runnable {
     private void handle(Socket socket) throws IOException {
         final PowerManager.WakeLock wl = JoH.getWakeLock("webservice-handler", 20000);
         BufferedReader reader = null;
-        PrintStream output = null;
+        CRLFPrintStream output = null;
         try {
             socket.setSoTimeout((int) (Constants.SECOND_IN_MS * 10));
             try {
@@ -252,10 +283,11 @@ public class XdripWebService implements Runnable {
             reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             String line;
 
+            boolean headersOnly = false;
             int lineCount = 0;
             while (!TextUtils.isEmpty(line = reader.readLine()) && lineCount < 50) {
 
-                if (line.startsWith("GET /")) {
+                if (line.startsWith("GET /") || line.startsWith("HEAD /")) {
                     int start = line.indexOf('/') + 1;
                     int end = line.indexOf(' ', start);
                     if (start < line.length()) {
@@ -264,7 +296,8 @@ public class XdripWebService implements Runnable {
                         //if (hashedSecret == null) break; // we can't optimize as we always need to look for api-secret even if server doesn't use it
                     }
 
-                } else if (line.startsWith(("api-secret"))) {
+                    headersOnly = line.startsWith("HEAD /");
+                } else if (line.toLowerCase().startsWith(("api-secret"))) {
                     final String requestSecret[] = line.split(": ");
                     if (requestSecret.length < 2) continue;
                     secretCheckResult.set(hashedSecret != null && hashedSecret.equalsIgnoreCase(requestSecret[1]));
@@ -274,7 +307,7 @@ public class XdripWebService implements Runnable {
             }
 
             // Output stream that we send the response to
-            output = new PrintStream(socket.getOutputStream());
+            output = new CRLFPrintStream(socket.getOutputStream());
 
             // Prepare the content to send.
             if (null == route) {
@@ -311,12 +344,17 @@ public class XdripWebService implements Runnable {
                 return;
             }
             // Send out the content.
-            output.println("HTTP/1.0 " + response.resultCode + " OK");
+            output.println("HTTP/1.0 " + response.resultCode + " " + response.getResultDesc());
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                output.println("Date: " + rfc7231formatter.format(ZonedDateTime.now(ZoneOffset.UTC)));
+            }
             output.println("Access-Control-Allow-Origin: *");
             output.println("Content-Type: " + response.mimeType);
             output.println("Content-Length: " + response.bytes.length);
             output.println();
-            output.write(response.bytes);
+            if (!headersOnly) {
+                output.write(response.bytes);
+            }
             output.flush();
 
             UserError.Log.d(TAG, "Sent response: " + response.bytes.length + " bytes, code: " + response.resultCode + " mimetype: " + response.mimeType);

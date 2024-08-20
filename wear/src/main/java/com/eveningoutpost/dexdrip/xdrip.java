@@ -5,25 +5,21 @@ import android.app.Application;
 import android.content.Context;
 import android.os.Build;
 import android.preference.PreferenceManager;
-import android.support.annotation.StringRes;
+import androidx.annotation.StringRes;
 import android.util.Log;
 
 import com.activeandroid.ActiveAndroid;
-import com.crashlytics.android.Crashlytics;
-import com.crashlytics.android.core.CrashlyticsCore;
-import com.eveningoutpost.dexdrip.Models.BgReading;
-import com.eveningoutpost.dexdrip.Models.JoH;
-import com.eveningoutpost.dexdrip.Models.LibreBlock;
-import com.eveningoutpost.dexdrip.Models.LibreData;
-import com.eveningoutpost.dexdrip.Models.Sensor;
-import com.eveningoutpost.dexdrip.UtilityModels.PlusAsyncExecutor;
-import com.eveningoutpost.dexdrip.UtilityModels.VersionTracker;
+import com.eveningoutpost.dexdrip.models.BgReading;
+import com.eveningoutpost.dexdrip.models.JoH;
+import com.eveningoutpost.dexdrip.models.LibreBlock;
+import com.eveningoutpost.dexdrip.models.LibreData;
+import com.eveningoutpost.dexdrip.models.Sensor;
+import com.eveningoutpost.dexdrip.utilitymodels.PlusAsyncExecutor;
+import com.eveningoutpost.dexdrip.utilitymodels.VersionTracker;
 
-import io.fabric.sdk.android.Fabric;
 
 import static com.eveningoutpost.dexdrip.utils.VersionFixer.disableUpdates;
 
-//import io.fabric.sdk.android.Fabric;
 
 /**
  * Created by Emma Black on 3/21/15.
@@ -44,7 +40,7 @@ public class xdrip extends Application {
         super.onCreate();
         try {
             if (PreferenceManager.getDefaultSharedPreferences(xdrip.context).getBoolean("enable_crashlytics", true)) {
-                initCrashlytics(this);
+
             }
         } catch (Exception e) {
             Log.e(TAG, e.toString());
@@ -57,21 +53,9 @@ public class xdrip extends Application {
         executor = new PlusAsyncExecutor();
         VersionTracker.updateDevice();
         disableUpdates();
+
     }
 
-    public synchronized static void initCrashlytics(Context context) {
-        if ((!fabricInited && isWear2OrAbove() && !isRunningTest())) {
-            try {
-                Crashlytics crashlyticsKit = new Crashlytics.Builder()
-                        .core(new CrashlyticsCore.Builder().disabled(BuildConfig.DEBUG).build())
-                        .build();
-                Fabric.with(context, crashlyticsKit);
-            } catch (Exception e) {
-                Log.e(TAG, e.toString());
-            }
-            fabricInited = true;
-        }
-    }
 
     public static Context getAppContext() {
         return xdrip.context;

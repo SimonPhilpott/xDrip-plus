@@ -4,7 +4,7 @@ package com.eveningoutpost.dexdrip.cgm.nsfollow.messages;
 
 // Nightscout Entry data item
 
-import com.eveningoutpost.dexdrip.Models.DateUtil;
+import com.eveningoutpost.dexdrip.models.DateUtil;
 import com.google.gson.annotations.Expose;
 
 import java.util.Date;
@@ -14,7 +14,7 @@ public class Entry extends BaseMessage {
     @Expose
     public String _id;
     @Expose
-    public long date;
+    public double date;
     @Expose
     public String dateString;
     @Expose
@@ -38,11 +38,9 @@ public class Entry extends BaseMessage {
     @Expose
     public double unfiltered;
 
-// TODO unit test this!!
-
     public long getTimeStamp() {
         if (date > 1000000) {
-            return date;
+            return Math.round(date);
         }
         if (sysTime != null) {
             try {
